@@ -1,14 +1,29 @@
 <html>
 <head>
 <title>Branch and Bound on the TSP</title>
+<style>
+/* SVG styling */
+svg {
+  width: 840px;
+  height: 600px;
+  font-family: helvetica, sans-serif;
+}
+
+path, line {
+  stroke: #777;
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.3.11/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
-<script src="app.js">
-</script>
 </head>
 <body>
-Current best lower bound: <span id="len"></span>
-<br />
-Iterations: <span id="iters"></span>
+Current best length: <span id="len"></span><br />
+Iterations: <span id="iters"></span><br />
 
+<canvas width="150" height="150" id="canvas1"></canvas>
+<canvas id="canvas2"></canvas>
+
+<script src="app.js">
+</script>
 </body>
 </html>
