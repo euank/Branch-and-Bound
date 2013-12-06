@@ -1,6 +1,6 @@
 var MAX_X = 100;
 var MAX_Y = 100;
-var MAX_ITERATIONS = 10;
+var MAX_ITERATIONS = 100;
 function TSP(numCities) {
   var cities = [];
   for(var i=0;i<numCities;i++) {
@@ -58,6 +58,13 @@ function updateDom(tt, iters) {
     ctx.lineTo(c2.x,c2.y);
     ctx.stroke();
   }
+  canvas = document.querySelector("#canvas2");
+  ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  canvas.width = canvas.width+1;
+  canvas.width = canvas.width-1;
+
+
 }
 
 function pairsContain(pairs, x, y) {
@@ -139,7 +146,6 @@ function TourTreeNode(tsp, include, exclude, parent) {
       tourLength += this.tsp.cities[tour[i]].weights[tour[(i+1) % this.tsp.cities[i].weights.length]];
     }
     this.tour = {path: tour, distance: tourLength};
-    console.log(this.tour);
     return this.tour;
   };
 
@@ -229,7 +235,6 @@ function TourTree(tsp) {
         }
         tt.leaves.push(left);
       } else {
-        console.log("trim");
       }
       if(right && right.lowerBound < tt.bestCost) {
         if(tt.bestCost > right.tourDistance()) {
