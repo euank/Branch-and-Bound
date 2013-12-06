@@ -2,7 +2,7 @@ window.onload = function() {
   "use strict";
   var MAX_X = 100;
   var MAX_Y = 100;
-  var MAX_ITERATIONS = 150;
+  var MAX_ITERATIONS = 10;
   function TSP(numCities) {
     var cities = [];
     for(var i=0;i<numCities;i++) {
@@ -35,7 +35,7 @@ window.onload = function() {
     this.cities = cities;
   }
 
-  var t = new TSP(15);
+  var t = new TSP(10);
 
   function updateDom(len, iters) {
     document.querySelector("#len").innerHTML = len;
@@ -68,15 +68,62 @@ window.onload = function() {
     }
   }
 
-  function TourTreeNode(tour, tsp, include, exclude, parent) {
+  function TourTreeNode(tsp, include, exclude, parent) {
     this.tsp = tsp;
-    this.tour = tour;
+    this.tour = null;
     this.parent = parent;
     this.include = include;
     this.exclude = exclude;
     if(parent == null) this.level = 0;
     else this.level = parent.level + 1;
     this.left = this.right = null;
+
+    this.tourDistance = function() {
+      return this.getTour().distance;
+    };
+
+    this.getTour = function() {
+      if(this.tour != null) return this.tour;
+      var tour = [];
+      var tourLength = 0;
+      var cities = _.range(this.tsp.cities.length);
+      var include = this.include.slice();
+      tour.push(0); //always visit first city first.
+      cities.splice(0,1);
+      while(tour.length != this.tsp.cities.length) {
+        var cur = _.last(tour);
+
+        var requiredDest = _.compact(_.map(include,function(pair) { 
+          if(pair[0] == cur) return pair[1];
+          //if(pair[1] == cur) return pair[0];
+          return false; 
+        }));
+        if(requiredDest.length > 0) {
+          tour.push(requiredDest[0]);
+          cities.splice(cities.indexOf(requiredDest[0]),1);
+          continue;
+        }
+        var bannedDest = _.compact(_.map(this.exclude,function(pair) { 
+          if(pair[0] == cur) return pair[1];
+          if(pair[1] == cur) return pair[0];
+          return false; 
+        }));
+        for(var i=0;i<cities.length;i++) {
+          if(cur === cities[i]) continue;
+          if(bannedDest.indexOf(cities[i]) == -1) {
+            tour.push(cities[i]);
+            cities.splice(i,1);
+            break;
+          }
+        }
+      }
+      for(var i=0;i<tour.length;i++) {
+        tourLength += this.tsp.cities[tour[i]].weights[tour[(i+1) % this.tsp.cities[i].weights.length]];
+      }
+      this.tour = {path: tour, distance: tourLength};
+      console.log(this.tour);
+      return this.tour;
+    };
 
     this.tourLowerBound = function() {
       var lb = 0;
@@ -122,8 +169,9 @@ window.onload = function() {
       var toInclude = this.include.slice(); //copy
       var toExclude = this.exclude.slice();
       var levelPair = nthPair(this.tsp.cities.length, this.level);
+      if(typeof levelPair == 'undefined') return;
       toInclude.push(levelPair);
-      var c = new TourTreeNode(tour, this.tsp, toInclude, toExclude, this);
+      var c = new TourTreeNode(this.tsp, toInclude, toExclude, this);
       this.left = c;
       return c;
     }
@@ -132,8 +180,9 @@ window.onload = function() {
       var toInclude = this.include.slice(); //copy
       var toExclude = this.exclude.slice();
       var levelPair = nthPair(this.tsp.cities.length, this.level);
+      if(typeof levelPair == 'undefined') return;
       toExclude.push(levelPair);
-      var c = new TourTreeNode(tour, this.tsp, toInclude, toExclude, this);
+      var c = new TourTreeNode(this.tsp, toInclude, toExclude, this);
       this.right = c;
       return c;
     }
@@ -141,22 +190,25 @@ window.onload = function() {
 
   function TourTree(tsp) {
     this.tsp = tsp;
-    this.root = new TourTreeNode(tsp.getBasicTour(), tsp, [], [], null);
+    this.root = new TourTreeNode(tsp, [], [], null);
     this.leaves = [this.root];
-    this.bestLB = this.root.lowerBound;
+    this.bestCost = this.root.tourDistance();
     var tt = this;
     this.branch = function() {
-      var leaves2 = this.leaves.slice();
-      this.leaves = [];
+      var leaves2 = tt.leaves.slice();
+      if(tt.leaves.length == 0) {
+        console.log("We've reached the best the best the best");
+      }
+      tt.leaves = [];
       leaves2.forEach(function(leaf) {
         var left = leaf.getLeftChild();
         var right = leaf.getRightChild();
-        if(left.lowerBound <= tt.bestLB) {
-          tt.bestLB = left.lowerBound;
+        if(left && left.lowerBound < tt.bestCost) {
+          tt.bestCost = Math.min(tt.bestCost, left.tourDistance());
           tt.leaves.push(left);
         }
-        if(right.lowerBound <= tt.bestLB) {
-          tt.bestLB = right.lowerBound;
+        if(right && right.lowerBound < tt.bestCost) {
+          tt.bestCost = Math.min(tt.bestCost, right.tourDistance());
           tt.leaves.push(right);
         }
       });
@@ -166,8 +218,9 @@ window.onload = function() {
   var tourTree =  new TourTree(t);
   window.tt = tourTree;
   function improveSolution(tourTree, iters) {
+    console.log(iters);
     tourTree.branch();
-    updateDom(tourTree.bestLB, iters);
+    updateDom(tourTree.bestCost, iters);
     if(iters == MAX_ITERATIONS) {
       return;
     }
