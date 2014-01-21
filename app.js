@@ -1,5 +1,4 @@
 var worker = new Worker("BnB.js");
-worker._ = _;
 
 worker.onmessage = function(event) {
   var d = event.data;
