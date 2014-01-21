@@ -1,6 +1,6 @@
 var MAX_X = 100;
 var MAX_Y = 100;
-var MAX_ITERATIONS = 100;
+var MAX_ITERATIONS = 10000;
 
 function TSP(numCities) {
   var cities = [];
@@ -218,6 +218,7 @@ function TourTree(tsp) {
   this.root = new TourTreeNode(tsp, [], [], null);
   this.bestTour = this.root.getTour();
   this.leaves = [this.root];
+  this.currentNode = 0;
   this.bestCost = this.root.tourDistance();
   var tt = this;
   this.branch = function() {
@@ -246,20 +247,42 @@ function TourTree(tsp) {
       }
     });
   };
+  this.step = function() {
+    if(tt.leaves.length === 0) {
+      console.log("best solution found");
+      return;
+    }
+    var current = tt.leaves.splice(tt.currentNode,1)[0];
+    var left = current.getLeftChild(),
+        right = current.getRightChild();
+    if(left && left.lowerBound < tt.bestCost) {
+      if(tt.bestCost > left.tourDistance()) {
+        tt.bestTour = left.getTour();
+        tt.bestCost = left.tourDistance();
+      }
+      tt.leaves.push(left);
+    }
+    if(right && right.lowerBound < tt.bestCost) {
+      if(tt.bestCost > right.tourDistance()) {
+        tt.bestTour = right.getTour();
+        tt.bestCost = right.tourDistance();
+      }
+      tt.leaves.push(right);
+    }
+  };
 }
 
 var tourTree =  new TourTree(t);
 window.tt = tourTree;
 function improveSolution(tourTree, iters) {
-  tourTree.branch();
+  tourTree.step();
   updateDom(tourTree, iters);
   if(iters == MAX_ITERATIONS) {
     return;
   }
   setTimeout(function(){
       improveSolution(tourTree, iters+1);
-      updateDom(tourTree, iters);
-  },300);
+  },0);
 }
 
 improveSolution(tourTree, 0);
