@@ -1,6 +1,7 @@
 var MAX_X = 100;
 var MAX_Y = 100;
 var MAX_ITERATIONS = 100;
+
 function TSP(numCities) {
   var cities = [];
   for(var i=0;i<numCities;i++) {
@@ -29,7 +30,7 @@ function TSP(numCities) {
       tourLength += cities[i].weights[(i+1) % cities[i].weights.length];
     }
     return {path: tour, distance: tourLength};
-  }
+  };
   this.cities = cities;
 }
 
@@ -99,7 +100,7 @@ function TourTreeNode(tsp, include, exclude, parent) {
   this.parent = parent;
   this.include = include;
   this.exclude = exclude;
-  if(parent == null) this.level = 0;
+  if(parent === null) this.level = 0;
   else this.level = parent.level + 1;
   this.left = this.right = null;
 
@@ -108,7 +109,7 @@ function TourTreeNode(tsp, include, exclude, parent) {
   };
 
   this.getTour = function() {
-    if(this.tour != null) return this.tour;
+    if(this.tour !== null) return this.tour;
     var tour = [];
     var tourLength = 0;
     var cities = _.range(this.tsp.cities.length);
@@ -118,17 +119,17 @@ function TourTreeNode(tsp, include, exclude, parent) {
     while(tour.length != this.tsp.cities.length) {
       var cur = _.last(tour);
 
-      var requiredDest = _.compact(_.map(include,function(pair) { 
+      var requiredDest = _.compact(_.map(include,function(pair) {
         if(pair[0] == cur) return pair[1];
         //if(pair[1] == cur) return pair[0];
-        return false; 
+        return false;
       }));
       if(requiredDest.length > 0) {
         tour.push(requiredDest[0]);
         cities.splice(cities.indexOf(requiredDest[0]),1);
         continue;
       }
-      var bannedDest = _.compact(_.map(this.exclude,function(pair) { 
+      var bannedDest = _.compact(_.map(this.exclude, function(pair) {
         if(pair[0] == cur) return pair[1];
         if(pair[1] == cur) return pair[0];
         return false; 
@@ -198,7 +199,7 @@ function TourTreeNode(tsp, include, exclude, parent) {
     var c = new TourTreeNode(this.tsp, toInclude, toExclude, this);
     this.left = c;
     return c;
-  }
+  };
   this.getRightChild = function() {
     //Left child we attempt to exclude the LEVELth pair
     var toInclude = this.include.slice(); //copy
@@ -209,8 +210,8 @@ function TourTreeNode(tsp, include, exclude, parent) {
     var c = new TourTreeNode(this.tsp, toInclude, toExclude, this);
     this.right = c;
     return c;
-  }
-};
+  };
+}
 
 function TourTree(tsp) {
   this.tsp = tsp;
@@ -221,7 +222,7 @@ function TourTree(tsp) {
   var tt = this;
   this.branch = function() {
     var leaves2 = tt.leaves.slice();
-    if(tt.leaves.length == 0) {
+    if(tt.leaves.length === 0) {
       console.log("We've reached the best the best the best");
     }
     tt.leaves = [];
@@ -244,7 +245,7 @@ function TourTree(tsp) {
         tt.leaves.push(right);
       }
     });
-  }
+  };
 }
 
 var tourTree =  new TourTree(t);
