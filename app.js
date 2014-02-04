@@ -1,8 +1,7 @@
-var worker = new Worker("BnB.js");
+var worker = new Worker("BnB.js?v=5");
 
 worker.onmessage = function(event) {
   var d = event.data;
-  console.log(d);
   if(d.type && d.type == "console.log") {
     console.log.apply(console, d.data);
   } else {

@@ -1,11 +1,12 @@
 var MAX_X = 100;
 var MAX_Y = 100;
-var MAX_ITERATIONS = 10000;
+var MAX_ITERATIONS = 10;
 var NUM_CITIES = 5;
+
 var _ = self._;
 var console = {
   log: function() {
-    postMessage({type: 'console.log', data: Array.protoype.slice.call(arguments)});
+    postMessage({type: 'console.log', data: Array.prototype.slice.call(arguments)});
   }
 };
 
@@ -86,30 +87,35 @@ function TourTreeNode(tsp, include, exclude, parent) {
 
   this.getTour = function() {
     //Don't recalc if we already did the work
-    if(this.tour !== null) return this.tour;
+    if(this.tour !== null) {
+      console.log("Norecalc");
+      return this.tour;
+    }
     var tour = [];
     var tourLength = 0;
     var cities = _.range(this.tsp.cities.length);
     var include = this.include.slice();
+    var exclude = this.exclude.slice();
     tour.push(0); //always visit first city first.
     cities.splice(0,1);
     while(tour.length != this.tsp.cities.length) {
       var cur = _.last(tour);
 
       var requiredDest = _.compact(_.map(include,function(pair) {
-        if(pair[0] == cur) return pair[1];
-        //if(pair[1] == cur) return pair[0];
+        if(pair[0] == cur && tour.indexOf(pair[1]) === -1) return pair[1];
         return false;
       }));
       if(requiredDest.length > 0) {
         tour.push(requiredDest[0]);
         cities.splice(cities.indexOf(requiredDest[0]),1);
         continue;
+      } else if(requiredDest.length > 1) {
+        console.log("IMPOSSIBLE TOUR");
       }
-      var bannedDest = _.compact(_.map(this.exclude, function(pair) {
+      var bannedDest = _.compact(_.map(exclude, function(pair) {
         if(pair[0] == cur) return pair[1];
         if(pair[1] == cur) return pair[0];
-        return false; 
+        return false;
       }));
       for(var i=0;i<cities.length;i++) {
         if(cur === cities[i]) continue;
